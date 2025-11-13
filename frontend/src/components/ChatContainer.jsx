@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 import ChatHeader from "./ChatHeader";
@@ -6,31 +6,32 @@ import NoChatHistoryPlaceholder from "./NoChatHistoryPlaceholder";
 import MessageInput from "./MessageInput";
 import MessagesLoadingSkeleton from "./MessagesLoadingSkeleton";
 
-function ChatContainer() {
+function ChatContainer({ messageEndRef, showHeader = true }) {
   const { selectedUser, getMessagesByUserId, messages, isMessagesLoading, subscribeToMessages, unsubscribeFromMessages } = useChatStore();
   const { authUser } = useAuthStore();
-  const messageEndRef = useRef(null);
 
   useEffect(() => {
     getMessagesByUserId(selectedUser._id);
-    subscribeToMessages()
+    subscribeToMessages();
 
-    return () => unsubscribeFromMessages()
+    return () => unsubscribeFromMessages();
   }, [selectedUser, getMessagesByUserId, subscribeToMessages, unsubscribeFromMessages]);
 
   useEffect(() => {
-    if (messageEndRef.current) {
+    if (messageEndRef?.current) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages]);
-
+  }, [messages, messageEndRef]);
 
   return (
-    <>
-      <ChatHeader />
-      <div className="flex-1 px-6 overflow-y-auto py-8 h-[635px]">
+    <div className="flex flex-col h-full">
+      {/* Conditionally render header */}
+      {showHeader && <ChatHeader />}
+
+      {/* Scrollable message area */}
+      <div className="flex-1 overflow-y-auto px-6 py-6 bg-gradient-to-b from-slate-900/80 to-slate-950">
         {messages.length > 0 && !isMessagesLoading ? (
-          <div className="max-w-3xl mx-auto space-y-6 ">
+          <div className="mx-auto space-y-6">
             {messages.map((msg) => (
               <div
                 key={msg._id}
@@ -71,8 +72,11 @@ function ChatContainer() {
         )}
       </div>
 
-      <MessageInput />
-    </>
+      {/* Fixed input bar */}
+      <div className="sticky bottom-0 bg-slate-900/60 backdrop-blur-md border-t border-slate-700/40">
+        <MessageInput />
+      </div>
+    </div>
   );
 }
 
